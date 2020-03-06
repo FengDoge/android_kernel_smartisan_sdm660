@@ -861,8 +861,7 @@ static void wma_data_tx_ack_work_handler(void *ack_work)
 
 	/* Call the Ack Cb registered by UMAC */
 	if (ack_cb)
-		ack_cb((tpAniSirGlobal) (wma_handle->mac_context), NULL,
-			work->status, NULL);
+		ack_cb(wma_handle->mac_context, NULL, work->status, NULL);
 	else
 		WMA_LOGE("Data Tx Ack Cb is NULL");
 
@@ -1196,8 +1195,6 @@ void wma_set_linkstate(tp_wma_handle wma, tpLinkStateParams params)
 		 params->state, params->selfMacAddr);
 	if ((params->state != eSIR_LINK_PREASSOC_STATE) &&
 	    (params->state != eSIR_LINK_DOWN_STATE)) {
-		WMA_LOGD("%s: unsupported link state %d",
-			 __func__, params->state);
 		params->status = false;
 		goto out;
 	}
@@ -2562,11 +2559,6 @@ QDF_STATUS wma_tx_packet(void *wma_context, void *tx_frame, uint16_t frmLen,
 			frmLen = newFrmLen;
 			pFc = (tpSirMacFrameCtl) (qdf_nbuf_data(tx_frame));
 		}
-	} else if (iface && !iface->rmfEnabled) {
-		if (pFc->wep && (frmType == TXRX_FRM_802_11_MGMT)) {
-			wma_err("PMF is disabled, but WEP is set");
-			pFc->wep = 0;
-		}
 	}
 #endif /* WLAN_FEATURE_11W */
 	mHdr = (tpSirMacMgmtHdr)qdf_nbuf_data(tx_frame);
@@ -2805,11 +2797,10 @@ QDF_STATUS wma_tx_packet(void *wma_context, void *tx_frame, uint16_t frmLen,
 					WLAN_MGMT_NB_ID);
 	}
 
-	status = wlan_mgmt_txrx_mgmt_frame_tx(peer,
-			(tpAniSirGlobal)wma_handle->mac_context,
-			(qdf_nbuf_t)tx_frame,
-			NULL, tx_frm_ota_comp_cb,
-			WLAN_UMAC_COMP_MLME, &mgmt_param);
+	status = wlan_mgmt_txrx_mgmt_frame_tx(peer, wma_handle->mac_context,
+					      (qdf_nbuf_t)tx_frame,
+					      NULL, tx_frm_ota_comp_cb,
+					      WLAN_UMAC_COMP_MLME, &mgmt_param);
 
 	wlan_objmgr_peer_release_ref(peer, WLAN_MGMT_NB_ID);
 	if (status != QDF_STATUS_SUCCESS) {
